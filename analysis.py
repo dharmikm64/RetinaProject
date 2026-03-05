@@ -1,4 +1,4 @@
-﻿'''
+'''
 IDRiD Retinal Exudate Analysis
 
 Generates 4 diagnostic charts from the IDRiD dataset.
@@ -148,3 +148,113 @@ def _chart_exudate_vs_grade(df):
     _style_ax(ax)
     fig.tight_layout()
     return fig
+
+# -- Chart 3: Sample overlay grid --------------------------------
+
+def _chart_sample_overlays(df, images, masks):
+    '''For each DR grade, show one retinal image with yellow exudate overlay.'''
+    fig, axes = plt.subplots(1, 5, figsize=(22, 4))
+    for ax, grade in zip(axes, GRADE_ORDER):
+        candidates = df[
+            (df['retinopathy_grade'] == grade) &
+            df['image_id'].isin(images)
+        ]
+        if candidates.empty:
+            ax.set_visible(False)
+            continue
+        img_id   = candidates.iloc[0]['image_id']
+        img      = images[img_id].copy().astype(np.float32) / 255.0
+        has_mask = img_id in masks
+        if has_mask:
+            yellow = np.zeros_like(img)
+            yellow[..., 0] = 1.0
+            yellow[..., 1] = 1.0
+            alpha  = masks[img_id][..., np.newaxis].astype(np.float32) * 0.30
+            img    = img * (1 - alpha) + yellow * alpha
+        ax.imshow(np.clip(img, 0, 1))
+        suffix = ' (+ mask)' if has_mask else ''
+        ax.set_title(f'Grade {grade}: {GRADE_LABELS[grade]}{suffix}', fontsize=9)
+        ax.axis('off')
+    fig.suptitle(
+        'Sample Retinal Images per DR Grade  \u2014  yellow = hard exudate overlay',
+        fontsize=11, y=1.02,
+    )
+    fig.tight_layout()
+    return fig
+
+# -- Chart 4: Exudate presence rate per grade --------------------
+
+def _chart_exudate_presence_rate(df):
+    '''Bar chart: pct of images with masks that have any hard exudates per grade.'''
+    seg      = df[df['has_masks'] & df['has_hard_exudates'].notna()].copy()
+    presence = (
+        seg.groupby('retinopathy_grade')['has_hard_exudates']
+        .agg(lambda x: x.sum() / len(x) * 100)
+        .reindex(GRADE_ORDER, fill_value=0)
+    )
+    counts = (
+        seg.groupby('retinopathy_grade').size()
+        .reindex(GRADE_ORDER, fill_value=0)
+    )
+    fig, ax = plt.subplots(figsize=(9, 5))
+    bars = ax.bar(
+        GRADE_ORDER, presence.values,
+        color=GRADE_COLORS, edgecolor='white', linewidth=0.8,
+    )
+    for bar, pct, grade in zip(bars, presence.values, GRADE_ORDER):
+        n     = counts[grade]
+        label = f'{pct:.0f}%' if n > 0 else '\u2014'
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 1,
+            label, ha='center', va='bottom', fontsize=10, fontweight='bold',
+        )
+        if n > 0:
+            ax.text(
+                bar.get_x() + bar.get_width() / 2, -5,
+                f'n={n}', ha='center', va='top', fontsize=8, color='#666',
+            )
+    ax.set_xticks(GRADE_ORDER)
+    ax.set_xticklabels([f'Grade {g}' for g in GRADE_ORDER])
+    ax.set_ylim(-8, 115)
+    ax.set_xlabel('Diabetic Retinopathy Grade', labelpad=8)
+    ax.set_ylabel('% of Images with Any Hard Exudates')
+    ax.set_title('Hard Exudate Presence Rate by DR Grade\n(segmentation subset only)', fontsize=13)
+    _style_ax(ax)
+    fig.tight_layout()
+    return fig
+
+# -- Main analysis function --------------------------------------
+
+def run_analysis(df, images, masks):
+    '''
+    Generate all 4 analysis charts. Returns dict {chart_name: Figure}.
+
+    Parameters
+    ----------
+    df     : master DataFrame from load_dataset()
+    images : dict {image_id: np.array (512,512,3)}
+    masks  : dict {image_id: np.array (512,512) binary}
+    '''
+    tasks = {
+        'grade_distribution'   : (_chart_grade_distribution,   (df,)),
+        'exudate_vs_grade'     : (_chart_exudate_vs_grade,      (df,)),
+        'sample_overlays'      : (_chart_sample_overlays,       (df, images, masks)),
+        'exudate_presence_rate': (_chart_exudate_presence_rate, (df,)),
+    }
+    figures = {}
+    for name, (fn, args) in tasks.items():
+        fig = fn(*args)
+        figures[name] = fig
+        out_path = PROJECT_DIR / f'{name}.png'
+        fig.savefig(out_path, dpi=150, bbox_inches='tight')
+        print(f'[saved] {out_path.name}')
+    return figures
+
+
+# -- Entry point -------------------------------------------------
+
+if __name__ == '__main__':
+    df, images, masks = load_dataset()
+    run_analysis(df, images, masks)
+    print('[complete] Analysis done.')
