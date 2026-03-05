@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IDRiD Retinal Analysis</title>
+  <style>
+    /* ── Reset & base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --border:    #2a2d3e;
+      --accent:    #4f8ef7;
+      --accent2:   #7c5cbf;
+      --text:      #e8eaf0;
+      --muted:     #8890a8;
+      --g0:  #4CAF50;
+      --g1:  #8BC34A;
+      --g2:  #FFC107;
+      --g3:  #FF5722;
+      --g4:  #F44336;
+      --sidebar-w: 220px;
+    }
+    html, body { height: 100%; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+    /* ── Layout ─────────────────────────────────────────────────── */
+    .shell { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      flex-shrink: 0;
+      padding: 0;
+    }
+    .sidebar-brand {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-brand .eye { font-size: 28px; line-height: 1; margin-bottom: 6px; }
+    .sidebar-brand h1 { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: .4px; }
+    .sidebar-brand p  { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    nav { padding: 16px 0; flex: 1; }
+    nav button {
+      width: 100%; padding: 11px 20px;
+      background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13.5px; font-weight: 500; color: var(--muted);
+      text-align: left; transition: all .15s;
+    }
+    nav button:hover { background: rgba(255,255,255,.04); color: var(--text); }
+    nav button.active { background: rgba(79,142,247,.12); color: var(--accent); border-right: 3px solid var(--accent); }
+    nav button svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .sidebar-footer { padding: 16px 20px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); }
+
+    /* ── Main content ─────────────────────────────────────────────── */
+    .main { flex: 1; overflow-y: auto; padding: 36px 40px; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    h2.page-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    p.page-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+
+    /* ── Metric cards ─────────────────────────────────────────────── */
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+    .metric-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 20px;
+    }
+    .metric-card .val { font-size: 28px; font-weight: 700; color: var(--accent); }
+    .metric-card .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Chart grid ───────────────────────────────────────────────── */
+    .chart-row { display: grid; gap: 20px; margin-bottom: 20px; }
+    .chart-row.two   { grid-template-columns: 1fr 1fr; }
+    .chart-row.one   { grid-template-columns: 1fr; }
+    .chart-row.split { grid-template-columns: 2fr 1fr; }
+
+    .chart-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    .chart-card .card-header {
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px; font-weight: 600; color: var(--text);
+    }
+    .chart-card .card-body { padding: 16px; }
+    .chart-card img { width: 100%; border-radius: 4px; display: block; }
+    .chart-card .no-chart {
+      display: flex; align-items: center; justify-content: center;
+      height: 180px; font-size: 12px; color: var(--muted);
+    }
+
+    /* ── Grade table ──────────────────────────────────────────────── */
+    .grade-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .grade-table th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+    .grade-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
+    .grade-table tr:last-child td { border-bottom: none; }
+    .grade-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; }
+
+    /* ── Upload page ──────────────────────────────────────────────── */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 12px;
+      padding: 48px 24px; text-align: center; cursor: pointer;
+      transition: all .2s; margin-bottom: 28px;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--accent); background: rgba(79,142,247,.06);
+    }
+    .upload-zone .icon { font-size: 36px; margin-bottom: 12px; }
+    .upload-zone p { font-size: 14px; color: var(--muted); }
+    .upload-zone span { font-size: 12px; color: var(--muted); }
+    #file-input { display: none; }
+
+    /* ── Result panel ─────────────────────────────────────────────── */
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+    .image-preview-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    .image-preview-card .card-header { padding: 14px 18px 12px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; }
+    .image-preview-card img { width: 100%; display: block; }
+
+    .result-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 24px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .result-grade-badge {
+      border-radius: 8px; padding: 16px 20px;
+      background: rgba(255,255,255,.05);
+    }
+    .result-grade-badge .grade-num { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .result-grade-badge .grade-label { font-size: 22px; font-weight: 700; }
+    .result-grade-badge .grade-conf  { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    .result-context {
+      background: rgba(255,255,255,.03); border-radius: 8px;
+      padding: 14px 16px; font-size: 13px; line-height: 1.6; color: var(--text);
+    }
+    .result-context strong { color: var(--muted); font-size: 11px; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── Probability bars ─────────────────────────────────────────── */
+    .prob-section { }
+    .prob-section h4 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+    .prob-row { margin-bottom: 10px; }
+    .prob-row .prob-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .prob-row .prob-label .pval { color: var(--text); font-weight: 600; }
+    .prob-bar-bg { height: 8px; background: rgba(255,255,255,.07); border-radius: 4px; overflow: hidden; }
+    .prob-bar-fill { height: 100%; border-radius: 4px; transition: width .5s ease; }
+
+    /* ── Spinner / loading ────────────────────────────────────────── */
+    .spinner-wrap { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; padding: 20px 0; }
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hidden { display: none !important; }
+
+    /* ── Scrollbar ────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="eye">👁</div>
+      <h1>IDRiD Analysis</h1>
+      <p>Diabetic Retinopathy Tool</p>
+    </div>
+    <nav>
+      <button class="active" data-page="overview" onclick="switchPage('overview')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dataset Overview
+      </button>
+      <button data-page="analyze" onclick="switchPage('analyze')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Analyze an Image
+      </button>
+    </nav>
+    <div class="sidebar-footer">IDRiD Dataset &middot; 516 images</div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- ── Page 1: Overview ── -->
+    <div id="page-overview" class="page active">
+      <h2 class="page-title">Dataset Overview</h2>
+      <p class="page-subtitle">IDRiD — Indian Diabetic Retinopathy Image Dataset (516 fundus images, DR grades 0–4)</p>
+
+      <!-- Metrics -->
+      <div class="metrics" id="metrics">
+        <div class="metric-card"><div class="val" id="m-total">—</div><div class="lbl">Total Images</div></div>
+        <div class="metric-card"><div class="val" id="m-train">—</div><div class="lbl">Train Images</div></div>
+        <div class="metric-card"><div class="val" id="m-test">—</div><div class="lbl">Test Images</div></div>
+        <div class="metric-card"><div class="val" id="m-masks">—</div><div class="lbl">With Seg Masks</div></div>
+      </div>
+
+      <!-- Charts row 1 -->
+      <div class="chart-row two">
+        <div class="chart-card">
+          <div class="card-header">Grade Distribution</div>
+          <div class="card-body">
+            <img id="chart-grade" src="/api/chart/grade_distribution" alt="Grade Distribution"
+                 onerror="this.parentNode.innerHTML='<div class=no-chart>Run analysis.py to generate charts</div>'" />
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">Hard Exudate Coverage vs Grade</div>
+          <div class="card-body">
+            <img id="chart-exudate" src="/api/chart/exudate_vs_grade" alt="Exudate Coverage"
+                 onerror="this.parentNode.innerHTML='<div class=no-chart>Run analysis.py to generate charts</div>'" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts row 2 -->
+      <div class="chart-row one">
+        <div class="chart-card">
+          <div class="card-header">Sample Retinal Images per Grade &nbsp;—&nbsp; yellow overlay = hard exudates</div>
+          <div class="card-body">
+            <img src="/api/chart/sample_overlays" alt="Sample Overlays"
+                 onerror="this.parentNode.innerHTML='<div class=no-chart>Run analysis.py to generate charts</div>'" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts row 3 -->
+      <div class="chart-row split">
+        <div class="chart-card">
+          <div class="card-header">Hard Exudate Presence Rate by Grade</div>
+          <div class="card-body">
+            <img src="/api/chart/exudate_presence_rate" alt="Presence Rate"
+                 onerror="this.parentNode.innerHTML='<div class=no-chart>Run analysis.py to generate charts</div>'" />
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">Grade Breakdown</div>
+          <div class="card-body">
+            <table class="grade-table">
+              <thead><tr><th>Grade</th><th>Label</th><th>Images</th></tr></thead>
+              <tbody id="grade-table-body">
+                <tr><td colspan="3" style="color:var(--muted);font-size:12px">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Page 2: Analyze ── -->
+    <div id="page-analyze" class="page">
+      <h2 class="page-title">Analyze an Image</h2>
+      <p class="page-subtitle">Upload a retinal fundus photograph — the EfficientNet-B0 classifier predicts the DR grade.</p>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()"
+           ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <div class="icon">🖼️</div>
+        <p>Click to upload or drag &amp; drop</p>
+        <span>JPG, JPEG, PNG supported</span>
+      </div>
+      <input type="file" id="file-input" accept=".jpg,.jpeg,.png" onchange="handleFileSelect(event)" />
+
+      <!-- Loading -->
+      <div class="spinner-wrap hidden" id="loading">
+        <div class="spinner"></div>
+        Running classifier…
+      </div>
+
+      <!-- Result -->
+      <div id="result-section" class="hidden">
+        <div class="result-grid">
+          <div class="image-preview-card">
+            <div class="card-header">Uploaded Image</div>
+            <img id="preview-img" src="" alt="Preview" />
+          </div>
+          <div class="result-card">
+            <div class="result-grade-badge" id="grade-badge">
+              <div class="grade-num">PREDICTED GRADE</div>
+              <div class="grade-label" id="grade-label">—</div>
+              <div class="grade-conf"  id="grade-conf">—</div>
+            </div>
+            <div class="result-context">
+              <strong>Clinical Context</strong>
+              <span id="grade-context">—</span>
+            </div>
+            <div class="prob-section">
+              <h4>Grade Probabilities</h4>
+              <div id="prob-bars"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const API = '';   // same origin
+
+  const GRADE_COLORS = ['#4CAF50','#8BC34A','#FFC107','#FF5722','#F44336'];
+  const GRADE_LABELS = ['No DR','Mild DR','Moderate DR','Severe DR','Proliferative DR'];
+
+  /* ── Navigation ─────────────────────────────────── */
+  function switchPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.querySelector(`nav button[data-page="${name}"]`).classList.add('active');
+  }
+
+  /* ── Load stats ──────────────────────────────────── */
+  async function loadStats() {
+    try {
+      const r = await fetch(API + '/api/stats');
+      const d = await r.json();
+      document.getElementById('m-total').textContent = d.total;
+      document.getElementById('m-train').textContent = d.train;
+      document.getElementById('m-test').textContent  = d.test;
+      document.getElementById('m-masks').textContent = d.with_masks;
+
+      const tbody = document.getElementById('grade-table-body');
+      tbody.innerHTML = '';
+      for (let g = 0; g <= 4; g++) {
+        const count = d.grade_counts[g] || 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="grade-dot" style="background:${GRADE_COLORS[g]}"></span>Grade ${g}</td>
+          <td>${GRADE_LABELS[g]}</td>
+          <td>${count}</td>`;
+        tbody.appendChild(tr);
+      }
+    } catch (e) {
+      console.error('Stats load failed:', e);
+    }
+  }
+
+  /* ── Drag & drop ─────────────────────────────────── */
+  function handleDragOver(e) {
+    e.preventDefault();
+    document.getElementById('upload-zone').classList.add('drag-over');
+  }
+  function handleDragLeave(e) {
+    document.getElementById('upload-zone').classList.remove('drag-over');
+  }
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('upload-zone').classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  }
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) processFile(file);
+  }
+
+  /* ── Run prediction ──────────────────────────────── */
+  async function processFile(file) {
+    // show preview immediately
+    const reader = new FileReader();
+    reader.onload = ev => { document.getElementById('preview-img').src = ev.target.result; };
+    reader.readAsDataURL(file);
+
+    document.getElementById('result-section').classList.add('hidden');
+    document.getElementById('loading').classList.remove('hidden');
+
+    try {
+      const form = new FormData();
+      form.append('image', file);
+      const r    = await fetch(API + '/api/predict', { method: 'POST', body: form });
+      const data = await r.json();
+
+      document.getElementById('loading').classList.add('hidden');
+
+      if (data.error) {
+        alert('Error: ' + data.error);
+        return;
+      }
+
+      const g = data.grade;
+      const badge = document.getElementById('grade-badge');
+      badge.style.borderLeft = `4px solid ${GRADE_COLORS[g]}`;
+
+      document.getElementById('grade-label').textContent = `Grade ${g} — ${data.label}`;
+      document.getElementById('grade-label').style.color = GRADE_COLORS[g];
+      document.getElementById('grade-conf').textContent  = `Confidence: ${data.confidence.toFixed(1)}%`;
+      document.getElementById('grade-context').textContent = data.context;
+
+      // probability bars
+      const container = document.getElementById('prob-bars');
+      container.innerHTML = '';
+      data.probs.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'prob-row';
+        div.innerHTML = `
+          <div class="prob-label">
+            <span>Grade ${i}: ${GRADE_LABELS[i]}</span>
+            <span class="pval">${p.toFixed(1)}%</span>
+          </div>
+          <div class="prob-bar-bg">
+            <div class="prob-bar-fill" style="width:${p}%;background:${GRADE_COLORS[i]}"></div>
+          </div>`;
+        container.appendChild(div);
+      });
+
+      document.getElementById('result-section').classList.remove('hidden');
+    } catch (e) {
+      document.getElementById('loading').classList.add('hidden');
+      alert('Request failed: ' + e.message);
+    }
+  }
+
+  /* ── Init ────────────────────────────────────────── */
+  loadStats();
+</script>
+</body>
+</html>
