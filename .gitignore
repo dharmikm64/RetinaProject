@@ -1,0 +1,19 @@
+# Large dataset files - download from IDRiD challenge
+A. Segmentation.zip
+A. Segmentation/
+B. Disease Grading/1. Original Images/
+
+# Windows shortcuts
+*.lnk
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
