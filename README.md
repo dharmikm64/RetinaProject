@@ -8,14 +8,15 @@ A complete end-to-end pipeline for analyzing diabetic retinopathy severity from 
 
 Diabetic retinopathy (DR) is a leading cause of blindness, and the presence and extent of hard exudates on the retina is a key indicator of disease severity and macular risk. This project ingests the IDRiD dataset, computes pixel-level exudate statistics from expert segmentation masks, trains an image classifier to predict DR grade, and presents everything through an interactive web dashboard.
 
-The pipeline is broken into four modules:
+The pipeline is broken into five modules:
 
 | File | Role |
 |---|---|
 | data_pipline.py | Data ingestion -- extracts the segmentation ZIP, merges grading labels with mask statistics, and exports processed_dataset.csv (516 rows) |
 | analysis.py | Visualization -- generates 4 diagnostic charts saved as PNGs |
 | classifier.py | ML model -- fine-tunes a pretrained EfficientNet-B0 on the grading images for 5-class DR grade prediction |
-| server.py + dashboard.html | Web dashboard -- Flask API backend with a single-page HTML/CSS/JS frontend |
+| progression.py | Progression analysis -- tracks hard exudate coverage across multiple patient visits, detects foveal threat clusters, and returns figures + a summary report |
+| server.py + dashboard.html | Web dashboard -- Flask API backend with a three-page HTML/CSS/JS frontend |
 
 ---
 
@@ -62,7 +63,7 @@ classifier.py fine-tunes EfficientNet-B0 (pretrained on ImageNet) for 5-class DR
 
     python server.py
 
-Opens at http://localhost:5000. Two pages:
+Opens at http://localhost:5000. Three pages:
 
 Dataset Overview
 - Summary metrics (total images, train/test split, segmentation mask count)
@@ -73,11 +74,17 @@ Analyze an Image
 - Drag-and-drop or click-to-upload a retinal fundus image
 - Returns predicted DR grade, confidence score, clinical context, and a probability bar chart across all 5 grades
 
+Patient Progression
+- Upload 2 or more dated retinal fundus images from the same patient
+- Optional: upload expert segmentation masks per visit; if omitted, exudates are auto-detected using green-channel CLAHE thresholding
+- Optional: specify fovea coordinates to enable macular threat analysis
+- Outputs: coverage trend chart, visit-to-visit diff overlays (new/resolved/persistent exudates), per-visit fovea proximity maps, and a plain-English progression summary
+
 ---
 
 ## Setup
 
-    pip install numpy pandas matplotlib pillow tifffile torch torchvision flask flask-cors
+    pip install numpy pandas matplotlib pillow tifffile torch torchvision flask flask-cors opencv-python
 
 Then run in order:
 
@@ -85,6 +92,10 @@ Then run in order:
     python analysis.py       # generate the 4 charts
     python classifier.py     # train the model (saves classifier.pth)
     python server.py         # launch the dashboard at http://localhost:5000
+
+Progression analysis runs automatically via the dashboard. To test it standalone:
+
+    python progression.py    # runs a synthetic 3-visit demo and saves figures
 
 ---
 
@@ -94,8 +105,9 @@ Then run in order:
     |-- data_pipline.py          # data ingestion pipeline
     |-- analysis.py              # chart generation
     |-- classifier.py            # EfficientNet-B0 classifier
+    |-- progression.py           # multi-visit exudate progression analysis
     |-- server.py                # Flask API server
-    |-- dashboard.html           # single-page web dashboard
+    |-- dashboard.html           # three-page web dashboard
     |-- processed_dataset.csv    # master dataset (516 rows)
     |-- classifier.pth           # trained model weights
     |-- grade_distribution.png
