@@ -6,13 +6,20 @@ Endpoints:
   GET  /api/stats             -> dataset summary JSON
   GET  /api/chart/<name>      -> pre-generated PNG charts
   POST /api/predict           -> upload image, returns grade + probs JSON
+  POST /api/progression       -> multi-visit progression analysis
 """
 
+import io
+import base64
 import sys
+import traceback
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from PIL import Image
@@ -23,6 +30,15 @@ from classifier import predict
 
 app  = Flask(__name__)
 CORS(app)
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    traceback.print_exc()
+    return jsonify({'error': str(e), 'type': type(e).__name__}), 500
+
+@app.errorhandler(400)
+def handle_400(e):
+    return jsonify({'error': str(e)}), 400
 
 VALID_CHARTS = {
     'grade_distribution',
@@ -47,6 +63,51 @@ GRADE_CONTEXT = {
     4: 'Proliferative DR — new vessel growth detected. Urgent specialist referral.',
 }
 
+
+
+
+def _auto_mask(img_arr):
+    """
+    Auto-detect hard exudate regions from a retinal image when no mask is provided.
+    Hard exudates appear as bright yellowish-white patches on a darker retinal background.
+    Uses the green channel (exudates are bright in green) + CLAHE + adaptive thresholding.
+    """
+    import cv2
+
+    # --- Step 1: isolate the retinal disc (exclude black border) ---
+    gray = cv2.cvtColor(img_arr, cv2.COLOR_RGB2GRAY)
+    _, retina = cv2.threshold(gray, 15, 255, cv2.THRESH_BINARY)
+    # keep only the largest connected region (the eye)
+    n, lbl, stats, _ = cv2.connectedComponentsWithStats(retina, connectivity=8)
+    if n > 1:
+        biggest = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
+        retina = (lbl == biggest).astype(np.uint8) * 255
+
+    # --- Step 2: enhance green channel contrast inside the retina ---
+    green = img_arr[:, :, 1].copy()
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    enhanced = clahe.apply(green)
+
+    # --- Step 3: threshold the top 8% brightest retinal pixels ---
+    retinal_pixels = enhanced[retina > 0]
+    if retinal_pixels.size == 0:
+        return np.zeros((512, 512), dtype=np.uint8)
+    thresh = float(np.percentile(retinal_pixels, 92))
+    bright = ((enhanced > thresh) & (retina > 0)).astype(np.uint8) * 255
+
+    # --- Step 4: remove the optic disc (the single largest bright blob) ---
+    n2, lbl2, stats2, _ = cv2.connectedComponentsWithStats(bright, connectivity=8)
+    if n2 > 1:
+        biggest2 = 1 + int(np.argmax(stats2[1:, cv2.CC_STAT_AREA]))
+        if stats2[biggest2, cv2.CC_STAT_AREA] > 800:
+            bright[lbl2 == biggest2] = 0
+
+    # --- Step 5: morphological cleanup ---
+    k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    bright = cv2.morphologyEx(bright, cv2.MORPH_OPEN,  k)
+    bright = cv2.morphologyEx(bright, cv2.MORPH_CLOSE, k)
+
+    return (bright > 0).astype(np.uint8)
 
 @app.route('/')
 def index():
@@ -91,7 +152,6 @@ def predict_route():
 
     grade, confidence = predict(img_arr)
 
-    # Full softmax probabilities for the probability bar chart
     probs = [0.0] * 5
     try:
         import torch
@@ -115,6 +175,69 @@ def predict_route():
         'probs'      : probs,
         'context'    : GRADE_CONTEXT[grade],
     })
+
+
+@app.route('/api/progression', methods=['POST'])
+def progression_route():
+    from progression import analyze_progression
+
+    # Parse how many visits were submitted
+    try:
+        visit_count = int(request.form.get('visit_count', 0))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'invalid visit_count'}), 400
+
+    if visit_count < 2:
+        return jsonify({'error': 'at least 2 visits are required'}), 400
+
+    visits = []
+    for i in range(visit_count):
+        date_str = request.form.get(f'date_{i}', '').strip()
+        if not date_str:
+            return jsonify({'error': f'missing date for visit {i + 1}'}), 400
+
+        img_file = request.files.get(f'image_{i}')
+        if not img_file:
+            return jsonify({'error': f'missing image for visit {i + 1}'}), 400
+
+        img_pil = Image.open(img_file.stream).convert('RGB')
+        img_arr = np.array(img_pil.resize((512, 512), Image.LANCZOS))
+
+        # If a mask is provided, use it; otherwise auto-detect exudates from the image
+        mask_file = request.files.get(f'mask_{i}')
+        if mask_file:
+            mask_pil = Image.open(mask_file.stream).convert('L')
+            mask_arr = (np.array(mask_pil.resize((512, 512), Image.NEAREST)) > 127).astype(np.uint8)
+        else:
+            mask_arr = _auto_mask(img_arr)
+
+        visits.append({'date': date_str, 'image': img_arr, 'mask': mask_arr})
+
+    # Optional fovea center
+    fovea_center = None
+    try:
+        fx = int(request.form.get('fovea_x', '').strip())
+        fy = int(request.form.get('fovea_y', '').strip())
+        fovea_center = (fx, fy)
+    except (ValueError, TypeError):
+        pass   # falls back to image center (256, 256) inside analyze_progression
+
+    try:
+        report, figures = analyze_progression(visits, fovea_center=fovea_center)
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'analyze_progression failed: {e}', 'type': type(e).__name__}), 500
+
+    # Encode all figures as base64 PNG so the browser can display them inline
+    figures_b64 = {}
+    for name, fig in figures.items():
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=120, bbox_inches='tight')
+        buf.seek(0)
+        figures_b64[name] = base64.b64encode(buf.read()).decode('utf-8')
+        plt.close(fig)
+
+    return jsonify({'report': report, 'figures': figures_b64})
 
 
 if __name__ == '__main__':

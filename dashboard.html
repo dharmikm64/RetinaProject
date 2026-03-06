@@ -34,7 +34,6 @@
       border-right: 1px solid var(--border);
       display: flex; flex-direction: column;
       flex-shrink: 0;
-      padding: 0;
     }
     .sidebar-brand {
       padding: 24px 20px 20px;
@@ -105,7 +104,7 @@
     .grade-table tr:last-child td { border-bottom: none; }
     .grade-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; }
 
-    /* ── Upload page ──────────────────────────────────────────────── */
+    /* ── Upload zone (page 2) ─────────────────────────────────────── */
     .upload-zone {
       border: 2px dashed var(--border); border-radius: 12px;
       padding: 48px 24px; text-align: center; cursor: pointer;
@@ -149,13 +148,99 @@
     .result-context strong { color: var(--muted); font-size: 11px; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
 
     /* ── Probability bars ─────────────────────────────────────────── */
-    .prob-section { }
     .prob-section h4 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
     .prob-row { margin-bottom: 10px; }
     .prob-row .prob-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
     .prob-row .prob-label .pval { color: var(--text); font-weight: 600; }
     .prob-bar-bg { height: 8px; background: rgba(255,255,255,.07); border-radius: 4px; overflow: hidden; }
     .prob-bar-fill { height: 100%; border-radius: 4px; transition: width .5s ease; }
+
+    /* ── Progression page ─────────────────────────────────────────── */
+    .visit-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+
+    .visit-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 20px;
+      display: grid; grid-template-columns: 160px 1fr 1fr auto; gap: 14px; align-items: center;
+    }
+    .visit-card label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; display: block; margin-bottom: 5px; }
+    .visit-card input[type=date] {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 10px; color: var(--text); font-size: 13px;
+    }
+    .visit-card input[type=date]:focus { outline: none; border-color: var(--accent); }
+
+    .file-btn {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 12px; cursor: pointer;
+      font-size: 12px; color: var(--muted); transition: all .15s; width: 100%;
+    }
+    .file-btn:hover { border-color: var(--accent); color: var(--text); }
+    .file-btn.has-file { border-color: var(--accent); color: var(--accent); }
+    .file-btn input { display: none; }
+
+    .remove-visit {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--muted); cursor: pointer; padding: 6px 10px; font-size: 16px;
+      transition: all .15s; line-height: 1;
+    }
+    .remove-visit:hover { border-color: #F44336; color: #F44336; }
+
+    .prog-options {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 20px; margin-bottom: 20px;
+    }
+    .prog-options h4 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 14px; }
+    .fovea-row { display: flex; align-items: center; gap: 12px; }
+    .fovea-row label { font-size: 13px; color: var(--text); }
+    .fovea-row input[type=number] {
+      width: 80px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 7px 10px; color: var(--text); font-size: 13px;
+    }
+    .fovea-row input:focus { outline: none; border-color: var(--accent); }
+    .fovea-hint { font-size: 11px; color: var(--muted); margin-left: 4px; }
+
+    .btn-row { display: flex; gap: 12px; margin-bottom: 28px; }
+    .btn {
+      padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: all .15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #3d7be0; }
+    .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+    .btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Progression results ──────────────────────────────────────── */
+    .prog-results { display: flex; flex-direction: column; gap: 24px; }
+
+    .summary-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 20px 22px;
+    }
+    .summary-box h4 { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+    .summary-box p { font-size: 13px; line-height: 1.7; color: var(--text); }
+
+    .trend-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+      margin-left: 10px;
+    }
+    .trend-increasing { background: rgba(244,67,54,.15); color: #F44336; }
+    .trend-decreasing { background: rgba(76,175,80,.15); color: #4CAF50; }
+    .trend-stable     { background: rgba(79,142,247,.15); color: #4f8ef7; }
+
+    .threat-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    }
+    .threat-yes { background: rgba(244,67,54,.15); color: #F44336; }
+    .threat-no  { background: rgba(76,175,80,.15);  color: #4CAF50; }
+
+    .prog-chart-grid { display: grid; gap: 16px; }
+    .prog-chart-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .prog-chart-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
 
     /* ── Spinner / loading ────────────────────────────────────────── */
     .spinner-wrap { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; padding: 20px 0; }
@@ -189,6 +274,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         Analyze an Image
       </button>
+      <button data-page="progression" onclick="switchPage('progression')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Patient Progression
+      </button>
     </nav>
     <div class="sidebar-footer">IDRiD Dataset &middot; 516 images</div>
   </aside>
@@ -201,7 +290,6 @@
       <h2 class="page-title">Dataset Overview</h2>
       <p class="page-subtitle">IDRiD — Indian Diabetic Retinopathy Image Dataset (516 fundus images, DR grades 0–4)</p>
 
-      <!-- Metrics -->
       <div class="metrics" id="metrics">
         <div class="metric-card"><div class="val" id="m-total">—</div><div class="lbl">Total Images</div></div>
         <div class="metric-card"><div class="val" id="m-train">—</div><div class="lbl">Train Images</div></div>
@@ -209,25 +297,23 @@
         <div class="metric-card"><div class="val" id="m-masks">—</div><div class="lbl">With Seg Masks</div></div>
       </div>
 
-      <!-- Charts row 1 -->
       <div class="chart-row two">
         <div class="chart-card">
           <div class="card-header">Grade Distribution</div>
           <div class="card-body">
-            <img id="chart-grade" src="/api/chart/grade_distribution" alt="Grade Distribution"
+            <img src="/api/chart/grade_distribution" alt="Grade Distribution"
                  onerror="this.parentNode.innerHTML='<div class=no-chart>Run analysis.py to generate charts</div>'" />
           </div>
         </div>
         <div class="chart-card">
           <div class="card-header">Hard Exudate Coverage vs Grade</div>
           <div class="card-body">
-            <img id="chart-exudate" src="/api/chart/exudate_vs_grade" alt="Exudate Coverage"
+            <img src="/api/chart/exudate_vs_grade" alt="Exudate Coverage"
                  onerror="this.parentNode.innerHTML='<div class=no-chart>Run analysis.py to generate charts</div>'" />
           </div>
         </div>
       </div>
 
-      <!-- Charts row 2 -->
       <div class="chart-row one">
         <div class="chart-card">
           <div class="card-header">Sample Retinal Images per Grade &nbsp;—&nbsp; yellow overlay = hard exudates</div>
@@ -238,7 +324,6 @@
         </div>
       </div>
 
-      <!-- Charts row 3 -->
       <div class="chart-row split">
         <div class="chart-card">
           <div class="card-header">Hard Exudate Presence Rate by Grade</div>
@@ -266,7 +351,6 @@
       <h2 class="page-title">Analyze an Image</h2>
       <p class="page-subtitle">Upload a retinal fundus photograph — the EfficientNet-B0 classifier predicts the DR grade.</p>
 
-      <!-- Upload zone -->
       <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()"
            ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
         <div class="icon">🖼️</div>
@@ -275,13 +359,11 @@
       </div>
       <input type="file" id="file-input" accept=".jpg,.jpeg,.png" onchange="handleFileSelect(event)" />
 
-      <!-- Loading -->
       <div class="spinner-wrap hidden" id="loading">
         <div class="spinner"></div>
         Running classifier…
       </div>
 
-      <!-- Result -->
       <div id="result-section" class="hidden">
         <div class="result-grid">
           <div class="image-preview-card">
@@ -307,14 +389,53 @@
       </div>
     </div>
 
+    <!-- ── Page 3: Progression ── -->
+    <div id="page-progression" class="page">
+      <h2 class="page-title">Patient Progression</h2>
+      <p class="page-subtitle">Upload retinal images from multiple visits to track how a patient's condition is changing over time.</p>
+
+      <!-- Visit list -->
+      <div class="visit-list" id="visit-list"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="addVisit()">+ Add Visit</button>
+      </div>
+
+      <!-- Options -->
+      <div class="prog-options">
+        <h4>Options</h4>
+        <div class="fovea-row">
+          <label>Fovea center (pixels):</label>
+          <label style="margin-left:0">X</label>
+          <input type="number" id="fovea-x" placeholder="256" min="0" max="511" />
+          <label>Y</label>
+          <input type="number" id="fovea-y" placeholder="256" min="0" max="511" />
+          <span class="fovea-hint">Leave blank to use image center (256, 256)</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="run-btn" onclick="runProgression()">Run Analysis</button>
+      </div>
+
+      <!-- Loading -->
+      <div class="spinner-wrap hidden" id="prog-loading">
+        <div class="spinner"></div>
+        Running progression analysis… this may take a moment.
+      </div>
+
+      <!-- Results -->
+      <div id="prog-results" class="prog-results hidden"></div>
+    </div>
+
   </main>
 </div>
 
 <script>
-  const API = '';   // same origin
-
+  const API = '';
   const GRADE_COLORS = ['#4CAF50','#8BC34A','#FFC107','#FF5722','#F44336'];
   const GRADE_LABELS = ['No DR','Mild DR','Moderate DR','Severe DR','Proliferative DR'];
+  let visitCount = 0;
 
   /* ── Navigation ─────────────────────────────────── */
   function switchPage(name) {
@@ -324,7 +445,7 @@
     document.querySelector(`nav button[data-page="${name}"]`).classList.add('active');
   }
 
-  /* ── Load stats ──────────────────────────────────── */
+  /* ── Stats ───────────────────────────────────────── */
   async function loadStats() {
     try {
       const r = await fetch(API + '/api/stats');
@@ -333,91 +454,57 @@
       document.getElementById('m-train').textContent = d.train;
       document.getElementById('m-test').textContent  = d.test;
       document.getElementById('m-masks').textContent = d.with_masks;
-
       const tbody = document.getElementById('grade-table-body');
       tbody.innerHTML = '';
       for (let g = 0; g <= 4; g++) {
-        const count = d.grade_counts[g] || 0;
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><span class="grade-dot" style="background:${GRADE_COLORS[g]}"></span>Grade ${g}</td>
-          <td>${GRADE_LABELS[g]}</td>
-          <td>${count}</td>`;
+        tr.innerHTML = `<td><span class="grade-dot" style="background:${GRADE_COLORS[g]}"></span>Grade ${g}</td>
+          <td>${GRADE_LABELS[g]}</td><td>${d.grade_counts[g] || 0}</td>`;
         tbody.appendChild(tr);
       }
-    } catch (e) {
-      console.error('Stats load failed:', e);
-    }
+    } catch (e) { console.error('Stats load failed:', e); }
   }
 
-  /* ── Drag & drop ─────────────────────────────────── */
-  function handleDragOver(e) {
-    e.preventDefault();
-    document.getElementById('upload-zone').classList.add('drag-over');
-  }
-  function handleDragLeave(e) {
-    document.getElementById('upload-zone').classList.remove('drag-over');
-  }
+  /* ── Page 2: Drag & drop ─────────────────────────── */
+  function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag-over'); }
+  function handleDragLeave(e) { document.getElementById('upload-zone').classList.remove('drag-over'); }
   function handleDrop(e) {
     e.preventDefault();
     document.getElementById('upload-zone').classList.remove('drag-over');
     const file = e.dataTransfer.files[0];
     if (file) processFile(file);
   }
-  function handleFileSelect(e) {
-    const file = e.target.files[0];
-    if (file) processFile(file);
-  }
+  function handleFileSelect(e) { const file = e.target.files[0]; if (file) processFile(file); }
 
-  /* ── Run prediction ──────────────────────────────── */
   async function processFile(file) {
-    // show preview immediately
     const reader = new FileReader();
     reader.onload = ev => { document.getElementById('preview-img').src = ev.target.result; };
     reader.readAsDataURL(file);
-
     document.getElementById('result-section').classList.add('hidden');
     document.getElementById('loading').classList.remove('hidden');
-
     try {
       const form = new FormData();
       form.append('image', file);
       const r    = await fetch(API + '/api/predict', { method: 'POST', body: form });
       const data = await r.json();
-
       document.getElementById('loading').classList.add('hidden');
-
-      if (data.error) {
-        alert('Error: ' + data.error);
-        return;
-      }
-
+      if (data.error) { alert('Error: ' + data.error); return; }
       const g = data.grade;
       const badge = document.getElementById('grade-badge');
       badge.style.borderLeft = `4px solid ${GRADE_COLORS[g]}`;
-
       document.getElementById('grade-label').textContent = `Grade ${g} — ${data.label}`;
       document.getElementById('grade-label').style.color = GRADE_COLORS[g];
       document.getElementById('grade-conf').textContent  = `Confidence: ${data.confidence.toFixed(1)}%`;
       document.getElementById('grade-context').textContent = data.context;
-
-      // probability bars
       const container = document.getElementById('prob-bars');
       container.innerHTML = '';
       data.probs.forEach((p, i) => {
         const div = document.createElement('div');
         div.className = 'prob-row';
-        div.innerHTML = `
-          <div class="prob-label">
-            <span>Grade ${i}: ${GRADE_LABELS[i]}</span>
-            <span class="pval">${p.toFixed(1)}%</span>
-          </div>
-          <div class="prob-bar-bg">
-            <div class="prob-bar-fill" style="width:${p}%;background:${GRADE_COLORS[i]}"></div>
-          </div>`;
+        div.innerHTML = `<div class="prob-label"><span>Grade ${i}: ${GRADE_LABELS[i]}</span><span class="pval">${p.toFixed(1)}%</span></div>
+          <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${p}%;background:${GRADE_COLORS[i]}"></div></div>`;
         container.appendChild(div);
       });
-
       document.getElementById('result-section').classList.remove('hidden');
     } catch (e) {
       document.getElementById('loading').classList.add('hidden');
@@ -425,8 +512,200 @@
     }
   }
 
+  /* ── Page 3: Visit management ────────────────────── */
+  function addVisit() {
+    const idx  = visitCount++;
+    const list = document.getElementById('visit-list');
+    const card = document.createElement('div');
+    card.className = 'visit-card';
+    card.id = `visit-${idx}`;
+    card.innerHTML = `
+      <div>
+        <label>Visit Date</label>
+        <input type="date" id="date-${idx}" />
+      </div>
+      <div>
+        <label>Retinal Image *</label>
+        <label class="file-btn" id="img-btn-${idx}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span id="img-name-${idx}">Click to select image</span>
+          <input type="file" accept=".jpg,.jpeg,.png" onchange="fileSelected(event, ${idx}, 'img')" />
+        </label>
+      </div>
+      <div>
+        <label>Exudate Mask <span style="color:var(--muted)">(optional)</span></label>
+        <label class="file-btn" id="mask-btn-${idx}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span id="mask-name-${idx}">No mask selected</span>
+          <input type="file" accept=".png,.tif,.tiff" onchange="fileSelected(event, ${idx}, 'mask')" />
+        </label>
+      </div>
+      <button class="remove-visit" onclick="removeVisit(${idx})" title="Remove visit">&times;</button>`;
+    list.appendChild(card);
+  }
+
+  function removeVisit(idx) {
+    const el = document.getElementById(`visit-${idx}`);
+    if (el) el.remove();
+  }
+
+  function fileSelected(e, idx, type) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const nameEl = document.getElementById(`${type === 'img' ? 'img' : 'mask'}-name-${idx}`);
+    const btnEl  = document.getElementById(`${type === 'img' ? 'img' : 'mask'}-btn-${idx}`);
+    nameEl.textContent = file.name.length > 24 ? file.name.slice(0, 22) + '…' : file.name;
+    btnEl.classList.add('has-file');
+  }
+
+  /* ── Page 3: Run progression ─────────────────────── */
+  async function runProgression() {
+    const cards = document.querySelectorAll('.visit-card');
+    if (cards.length < 2) { alert('Add at least 2 visits to run progression analysis.'); return; }
+
+    const form = new FormData();
+    form.append('visit_count', cards.length);
+
+    let valid = true;
+    cards.forEach((card, i) => {
+      const idx      = card.id.replace('visit-', '');
+      const dateEl   = document.getElementById(`date-${idx}`);
+      const imgInput = card.querySelector(`input[type=file]:first-of-type`);
+      // get all file inputs in card
+      const fileInputs = card.querySelectorAll('input[type=file]');
+      const imgFile    = fileInputs[0] && fileInputs[0].files[0];
+      const maskFile   = fileInputs[1] && fileInputs[1].files[0];
+
+      if (!dateEl.value) { alert(`Please select a date for visit ${i + 1}.`); valid = false; return; }
+      if (!imgFile)      { alert(`Please select an image for visit ${i + 1}.`); valid = false; return; }
+
+      form.append(`date_${i}`,  dateEl.value);
+      form.append(`image_${i}`, imgFile);
+      if (maskFile) form.append(`mask_${i}`, maskFile);
+    });
+    if (!valid) return;
+
+    const fx = document.getElementById('fovea-x').value.trim();
+    const fy = document.getElementById('fovea-y').value.trim();
+    if (fx) form.append('fovea_x', fx);
+    if (fy) form.append('fovea_y', fy);
+
+    document.getElementById('prog-results').classList.add('hidden');
+    document.getElementById('prog-loading').classList.remove('hidden');
+    document.getElementById('run-btn').disabled = true;
+
+    try {
+      const r    = await fetch(API + '/api/progression', { method: 'POST', body: form });
+      const data = await r.json();
+      document.getElementById('prog-loading').classList.add('hidden');
+      document.getElementById('run-btn').disabled = false;
+
+      if (data.error) { alert('Error: ' + data.error); return; }
+      renderProgressionResults(data);
+    } catch (e) {
+      document.getElementById('prog-loading').classList.add('hidden');
+      document.getElementById('run-btn').disabled = false;
+      alert('Request failed: ' + e.message);
+    }
+  }
+
+  function renderProgressionResults(data) {
+    const { report, figures } = data;
+    const container = document.getElementById('prog-results');
+    container.innerHTML = '';
+
+    // ── Summary box ──
+    const trendClass = `trend-${report.trend}`;
+    const summaryBox = document.createElement('div');
+    summaryBox.className = 'summary-box';
+    const threats = report.macular_threat_per_visit;
+    const anyThreat = threats.some(Boolean);
+    summaryBox.innerHTML = `
+      <h4>Summary
+        <span class="trend-badge ${trendClass}">${report.trend}</span>
+        <span class="threat-badge ${anyThreat ? 'threat-yes' : 'threat-no'}" style="margin-left:8px">
+          ${anyThreat ? '⚠ Macular Threat' : '✓ No Macular Threat'}
+        </span>
+      </h4>
+      <p>${report.summary_text}</p>`;
+    container.appendChild(summaryBox);
+
+    // ── Coverage stats ──
+    const statsBox = document.createElement('div');
+    statsBox.className = 'summary-box';
+    const covRows = report.coverage_over_time.map((c, i) => {
+      const threat = threats[i];
+      return `<tr>
+        <td>Visit ${i + 1}</td>
+        <td>${c.toFixed(2)}%</td>
+        <td><span class="threat-badge ${threat ? 'threat-yes' : 'threat-no'}">${threat ? 'Threat' : 'Clear'}</span></td>
+      </tr>`;
+    }).join('');
+    statsBox.innerHTML = `
+      <h4>Coverage per Visit</h4>
+      <table class="grade-table">
+        <thead><tr><th>Visit</th><th>Exudate Coverage</th><th>Macular Threat</th></tr></thead>
+        <tbody>${covRows}</tbody>
+      </table>`;
+    container.appendChild(statsBox);
+
+    // ── Trend chart ──
+    if (figures['progression_trend']) {
+      const card = makeChartCard('Exudate Coverage Trend', figures['progression_trend']);
+      container.appendChild(card);
+    }
+
+    // ── Diff overlays ──
+    const diffKeys = Object.keys(figures).filter(k => k.startsWith('progression_diff'));
+    if (diffKeys.length > 0) {
+      const section = document.createElement('div');
+      section.innerHTML = `<h3 style="font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Change Between Visits</h3>`;
+      const grid = document.createElement('div');
+      grid.className = `prog-chart-grid ${diffKeys.length > 1 ? 'cols-2' : ''}`;
+      diffKeys.forEach(key => {
+        const label = key.replace('progression_diff_', '').replace(/_/g, ' → ');
+        grid.appendChild(makeChartCard(label, figures[key]));
+      });
+      section.appendChild(grid);
+      container.appendChild(section);
+    }
+
+    // ── Fovea proximity ──
+    const fovKeys = Object.keys(figures).filter(k => k.startsWith('fovea_proximity'));
+    if (fovKeys.length > 0) {
+      const section = document.createElement('div');
+      section.innerHTML = `<h3 style="font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Fovea Proximity per Visit</h3>`;
+      const grid = document.createElement('div');
+      const cols = fovKeys.length >= 3 ? 'cols-3' : fovKeys.length === 2 ? 'cols-2' : '';
+      grid.className = `prog-chart-grid ${cols}`;
+      fovKeys.forEach((key, i) => {
+        const label = `Visit ${i + 1} — Fovea Proximity`;
+        grid.appendChild(makeChartCard(label, figures[key]));
+      });
+      section.appendChild(grid);
+      container.appendChild(section);
+    }
+
+    container.classList.remove('hidden');
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function makeChartCard(title, b64) {
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+    card.innerHTML = `
+      <div class="card-header">${title}</div>
+      <div class="card-body">
+        <img src="data:image/png;base64,${b64}" style="width:100%;border-radius:4px;display:block" />
+      </div>`;
+    return card;
+  }
+
   /* ── Init ────────────────────────────────────────── */
   loadStats();
+  // Start with 2 visit slots
+  addVisit();
+  addVisit();
 </script>
 </body>
 </html>
